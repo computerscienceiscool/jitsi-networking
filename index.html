@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Jitsi Speed Networking</title>
+  <script src="https://meet.jit.si/external_api.js"></script>
+</head>
+<body>
+  <div id="meet" style="width:100%; height:100vh;"></div>
+  <script>
+    // no imports needed
+    const domain = 'meet.jit.si';
+    const roomName = 'SpeedNetRoom';
+    const api = new JitsiMeetExternalAPI(domain, {
+      roomName,
+      parentNode: document.getElementById('meet'),
+    });
+
+    // track participants
+    const participants = new Map();
+    api.addEventListener('participantJoined', evt => {
+      participants.set(evt.id, evt.displayName);
+    });
+    api.addEventListener('participantLeft', evt => {
+      participants.delete(evt.id);
+    });
+
+    // speed-networking logic (shuffling pairs, creating/closing breakouts)
+    function shuffle(a) { for (let i=a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function chunk(arr, size) { const res=[]; for (let i=0; i<arr.length; i+=size) res.push(arr.slice(i,i+size)); return res; }
+
+    function cycle() {
+      const ids = Array.from(participants.keys());
+      const pairs = chunk(shuffle(ids), 2);
+      const rooms = pairs.map((_,i) => `Pair ${i+1}`);
+      api.executeCommand('createBreakoutRooms', { rooms });
+      api.executeCommand('setBreakoutRoomsParticipants', {
+        rooms: pairs.map((grp,i) => ({ roomName: `Pair ${i+1}`, participants: grp }))
+      });
+      setTimeout(() => {
+        api.executeCommand('closeAllBreakoutRooms');
+        setTimeout(cycle, 5000);
+      }, 3*60*1000);
+    }
+
+    api.addEventListener('videoConferenceJoined', () => {
+      // start after a short delay to let everyone join
+      setTimeout(cycle, 10000);
+    });
+  </script>
+</body>
+</html>
