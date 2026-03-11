@@ -7,11 +7,16 @@ const { shuffle, chunk } = require('lodash');
  * create breakout rooms, assign them, then close after the timer.
  */
 function startSpeedNetworking(conference, participantsMap, intervalMs = 3 * 60 * 1000) {
-  async function cycle() {
+  function cycle() {
     const ids = Array.from(participantsMap.keys());
     if (ids.length < 2) return setTimeout(cycle, intervalMs);
 
     const pairs = chunk(shuffle(ids), 2);
+    // if odd count, merge the solo person into the last full pair
+    if (pairs.length > 1 && pairs[pairs.length - 1].length === 1) {
+      const solo = pairs.pop();
+      pairs[pairs.length - 1].push(solo[0]);
+    }
     // create rooms
     conference._room.sendCommand('createBreakoutRooms', {
       rooms: pairs.map((_, i) => `Pair ${i + 1}`)

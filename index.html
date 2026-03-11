@@ -33,6 +33,11 @@
     function cycle() {
       const ids = Array.from(participants.keys());
       const pairs = chunk(shuffle(ids), 2);
+      // if odd count, merge the solo person into the last full pair
+      if (pairs.length > 1 && pairs[pairs.length - 1].length === 1) {
+        const solo = pairs.pop();
+        pairs[pairs.length - 1].push(solo[0]);
+      }
       const rooms = pairs.map((_,i) => `Pair ${i+1}`);
       api.executeCommand('createBreakoutRooms', { rooms });
       api.executeCommand('setBreakoutRoomsParticipants', {

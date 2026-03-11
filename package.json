@@ -1,4 +1,9 @@
 {
+  "name": "jitsi-speed-networking",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "npx http-server . -p 9000"
+  },
   "dependencies": {
     "lib-jitsi-meet": "^1.0.6",
     "lodash": "^4.17.21"
