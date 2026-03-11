@@ -5,7 +5,10 @@ const participants = new Map();
 
 function initConnection(domain, roomName, options, onJoined, onUserJoin, onUserLeft) {
   JitsiMeetJS.init();
-  const conn = new JitsiMeetJS.JitsiConnection(null, null, { domain });
+  const conn = new JitsiMeetJS.JitsiConnection(null, null, {
+    hosts: { domain, muc: `conference.${domain}` },
+    serviceUrl: `https://${domain}/http-bind`
+  });
   conn.addEventListener(
     JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
     () => {
@@ -23,6 +26,14 @@ function initConnection(domain, roomName, options, onJoined, onUserJoin, onUserL
       });
       conf.join();
     }
+  );
+  conn.addEventListener(
+    JitsiMeetJS.events.connection.CONNECTION_FAILED,
+    (err) => { console.error('Connection failed:', err); }
+  );
+  conn.addEventListener(
+    JitsiMeetJS.events.connection.CONNECTION_DISCONNECTED,
+    () => { console.warn('Connection disconnected'); }
   );
   conn.connect();
   return { connection: conn, participants };

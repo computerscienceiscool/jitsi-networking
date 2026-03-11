@@ -30,7 +30,23 @@
     function shuffle(a) { for (let i=a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
     function chunk(arr, size) { const res=[]; for (let i=0; i<arr.length; i+=size) res.push(arr.slice(i,i+size)); return res; }
 
+    let cycleTimers = [];
+    let cycleStopped = false;
+
+    function scheduleTimer(fn, ms) {
+      const id = setTimeout(fn, ms);
+      cycleTimers.push(id);
+      return id;
+    }
+
+    function stopCycle() {
+      cycleStopped = true;
+      cycleTimers.forEach(id => clearTimeout(id));
+      cycleTimers = [];
+    }
+
     function cycle() {
+      if (cycleStopped) return;
       const ids = Array.from(participants.keys());
       const pairs = chunk(shuffle(ids), 2);
       // if odd count, merge the solo person into the last full pair
@@ -43,15 +59,15 @@
       api.executeCommand('setBreakoutRoomsParticipants', {
         rooms: pairs.map((grp,i) => ({ roomName: `Pair ${i+1}`, participants: grp }))
       });
-      setTimeout(() => {
+      scheduleTimer(() => {
         api.executeCommand('closeAllBreakoutRooms');
-        setTimeout(cycle, 5000);
+        scheduleTimer(cycle, 5000);
       }, 3*60*1000);
     }
 
     api.addEventListener('videoConferenceJoined', () => {
       // start after a short delay to let everyone join
-      setTimeout(cycle, 10000);
+      scheduleTimer(cycle, 10000);
     });
   </script>
 </body>
